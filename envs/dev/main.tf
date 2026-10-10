@@ -22,6 +22,63 @@ module "vpc" {
 
 }
 
+
+module "eks" {
+  source = "../../modules/eks"
+
+  project = local.project
+  env     = local.env
+
+  vpc_id     = module.vpc.vpc_id
+  subnet_ids = module.vpc.private_subnets
+
+  kubernetes_version = "1.33"
+  instance_types     = ["t3.small"]
+
+  min_size     = 1
+  max_size     = 5
+  desired_size = 4
+
+}
+
+
+module "rds" {
+  source  = "../../modules/rds"
+  project = local.project
+  env     = local.env
+  vpc_id  = module.vpc.vpc_id
+
+  username = "pharmaadmin"
+  password = var.db_password
+
+  db_subnet_group_name       = module.vpc.database_subnet_group_name
+  eks_node_security_group_id = module.eks.node_security_group_id
+
+
+}
+
+
+module "ecr" {
+  source = "../../modules/ecr"
+
+  project = local.project
+  env     = local.env
+
+
+  repositories = [
+    "api-gateway",
+    "auth-service",
+    "drug-catalog-service",
+    "inventory-service",
+    "manufacturing-service",
+    "notification-service",
+    "pharma-ui",
+    "supplier-service",
+    "qc-service",
+  ]
+
+}
+
 module "iam" {
   source = "../../modules/iam"
 
