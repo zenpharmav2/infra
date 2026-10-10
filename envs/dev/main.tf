@@ -21,3 +21,22 @@ module "vpc" {
   database_subnet_cidrs = ["10.0.5.0/24", "10.0.6.0/24"]
 
 }
+
+module "iam" {
+  source = "../../modules/iam"
+
+  project = local.project
+  env     = local.env
+  region  = local.region
+
+  # IRSA roles (ESO, ArgoCD, ALB controller) need the EKS OIDC provider.
+  # Once the EKS module exists, set this to true and pass its outputs, e.g.:
+  #   eks_oidc_provider_arn = module.eks.oidc_provider_arn
+  #   eks_oidc_provider_url = module.eks.cluster_oidc_issuer_url
+  enable_irsa_roles = false
+
+  # GitHub Actions: these repos/branches may assume the CI role
+  github_org      = "zenpharmav2"
+  github_repos    = ["frontend", "backend"]
+  github_branches = ["main", "develop"]
+}

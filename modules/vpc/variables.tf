@@ -1,12 +1,12 @@
-variable "project"{
-   description = "Project name" 
-   type        = string
+variable "project" {
+  description = "Project name"
+  type        = string
 
 }
 
-variable "env"{
-    description = "Environment name (dev, qa, prod)"
-    type = string
+variable "env" {
+  description = "Environment name (dev, qa, prod)"
+  type        = string
 }
 
 variable "region" {
