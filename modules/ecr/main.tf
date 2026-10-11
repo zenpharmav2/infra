@@ -1,25 +1,33 @@
-module "ecr" {
-  source  = "terraform-aws-modules/ecr/aws"
-  version = "~> 3.2"
-
+resource "aws_ecr_repository" "main" {
   for_each = toset(var.repositories)
 
-  repository_name                 = each.value
-  repository_image_tag_mutability = var.image_tag_mutability
-  repository_image_scan_on_push   = true
+  name                 = each.value
+  image_tag_mutability = "MUTABLE"
 
-  # Access is granted through IAM roles (e.g. GitHub Actions), not a repository policy
-  create_repository_policy = false
+  image_scanning_configuration {
+    scan_on_push = true
+  }
 
-  repository_lifecycle_policy = jsonencode({
+  tags = {
+    Name    = "${var.project}-${each.value}"
+    Env     = var.env
+    Project = var.project
+  }
+}
+
+resource "aws_ecr_lifecycle_policy" "main" {
+  for_each   = toset(var.repositories)
+  repository = aws_ecr_repository.main[each.key].name
+
+  policy = jsonencode({
     rules = [
       {
         rulePriority = 1
-        description  = "Keep last ${var.keep_image_count} images"
+        description  = "Keep last 10 images"
         selection = {
           tagStatus   = "any"
           countType   = "imageCountMoreThan"
-          countNumber = var.keep_image_count
+          countNumber = 10
         }
         action = {
           type = "expire"
@@ -27,10 +35,4 @@ module "ecr" {
       }
     ]
   })
-
-  tags = {
-    Name    = "${var.project}-${each.value}"
-    Env     = var.env
-    Project = var.project
-  }
 }

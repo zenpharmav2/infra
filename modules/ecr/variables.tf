@@ -9,18 +9,6 @@ variable "env" {
 }
 
 variable "repositories" {
-  description = "ECR repository names to create"
+  description = "List of ECR repository names to create"
   type        = list(string)
-}
-
-variable "image_tag_mutability" {
-  description = "MUTABLE or IMMUTABLE"
-  type        = string
-  default     = "MUTABLE"
-}
-
-variable "keep_image_count" {
-  description = "Number of images to keep per repository; older ones are expired"
-  type        = number
-  default     = 10
 }

@@ -5,18 +5,14 @@ module "eks" {
   name               = "${var.project}-${var.env}-cluster"
   kubernetes_version = var.kubernetes_version
 
-
-
   vpc_id     = var.vpc_id
   subnet_ids = var.subnet_ids
 
-  # Optional
-  endpoint_public_access  = true
   endpoint_private_access = true
+  endpoint_public_access  = true
 
   enable_irsa                              = true
   enable_cluster_creator_admin_permissions = true
-
 
   addons = {
     vpc-cni = {
@@ -27,8 +23,6 @@ module "eks" {
     coredns                = { most_recent = true }
     eks-pod-identity-agent = { most_recent = true }
   }
-
-
 
   eks_managed_node_groups = {
     main = {
