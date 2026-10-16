@@ -26,6 +26,24 @@ resource "aws_iam_openid_connect_provider" "github_actions" {
   }
 }
 
+# GitHub sends the `sub` claim in one of two formats depending on repo/org settings:
+#   legacy:    repo:<org>/<repo>:ref:refs/heads/<branch>
+#   immutable: repo:<org>@<org_id>/<repo>@<repo_id>:ref:refs/heads/<branch>
+# Repos in this org use the immutable format, so both are accepted here.
+locals {
+  github_repos    = ["frontend", "backend"]
+  github_branches = ["main", "develop", "release/*"]
+
+  github_oidc_subjects = flatten([
+    for repo in local.github_repos : [
+      for branch in local.github_branches : [
+        "repo:${var.github_org}/${repo}:ref:refs/heads/${branch}",
+        "repo:${var.github_org}@*/${repo}@*:ref:refs/heads/${branch}",
+      ]
+    ]
+  ])
+}
+
 data "aws_iam_policy_document" "github_actions_assume_role" {
   statement {
     actions = ["sts:AssumeRoleWithWebIdentity"]
@@ -45,12 +63,7 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values = [
-        "repo:${var.github_org}/frontend:ref:refs/heads/main",
-        "repo:${var.github_org}/frontend:ref:refs/heads/develop",
-        "repo:${var.github_org}/backend:ref:refs/heads/main",
-        "repo:${var.github_org}/backend:ref:refs/heads/develop",
-      ]
+      values   = local.github_oidc_subjects
     }
   }
 }
